@@ -9,7 +9,7 @@ from conans.errors import ConanInvalidConfiguration
 
 class TBBConan(ConanFile):
     name = "TBB"
-    version = "2019_U3"
+    version = "2019_U5"
     license = "Apache-2.0"
     url = "https://github.com/conan-community/conan-tbb"
     homepage = "https://github.com/01org/tbb"
@@ -24,6 +24,10 @@ that have future-proof scalability"""
     _source_subfolder = "source_subfolder"
     _targets = ["tbb"]
 
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.shared
+
     def configure(self):
         if self.settings.os == "Macos" and \
            self.settings.compiler == "apple-clang" and \
@@ -31,12 +35,10 @@ that have future-proof scalability"""
             raise ConanInvalidConfiguration("%s %s couldn't be built by apple-clang < 8.0" % (self.name, self.version))
         if self.settings.os != "Windows" and self.options.shared:
             self.output.warn("Intel-TBB strongly discourages usage of static linkage")
-        if self.options.tbbproxy and \
-           (not self.options.shared or \
-            not self.options.tbbmalloc):
-            raise ConanInvalidConfiguration("tbbproxy needs tbbmaloc and shared options")
-        if self.settings.os == "Windows" and not self.options.shared:
-            raise ConanInvalidConfiguration("TBB could not be built as static lib on Windows")
+        if not self.options.shared or \
+           not self.options.tbbmalloc and \
+           self.options.tbbproxy:
+            raise ConanInvalidConfiguration("tbbproxy needs tbbmaloc and shared")
 
     @property
     def is_msvc(self):
